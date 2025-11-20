@@ -64,6 +64,63 @@ class ControlsManager {
   }
 }
 
+// map/map.adapter.ts
+class MapAdapter {
+  static async fromURL(url) {
+    const response = await fetch(url);
+    const tiledSchema = await response.json();
+    const schema = {
+      ...this.parseMapInfo(tiledSchema),
+      ...this.parseLayers(tiledSchema)
+    };
+    return schema;
+  }
+  static parseMapInfo(schema) {
+    return {
+      width: schema.width * schema.tilewidth,
+      height: schema.height * schema.tileheight
+    };
+  }
+  static parseLayers(schema) {
+    const objects = [];
+    const layers = [];
+    for (const layer of schema.layers) {
+      switch (layer.type) {
+        case "tilelayer":
+          layers.push(this.parseTilesLayer(layer));
+          break;
+        case "objectgroup":
+          const objectGroup = this.parseObjectGroup(layer);
+          layers.push(objectGroup);
+          objects.push(...objectGroup.objects);
+          break;
+        default:
+          continue;
+      }
+    }
+    return { objects, layers };
+  }
+  static parseTilesLayer(layer) {
+    return {
+      type: "tiles",
+      tiles: layer.data,
+      class: layer.class
+    };
+  }
+  static parseObjectGroup(layer) {
+    return {
+      type: "objects",
+      objects: layer.objects.map((obj) => ({
+        x: obj.x,
+        y: obj.y,
+        name: obj.name,
+        type: obj.type
+      }))
+    };
+  }
+}
+
 // index.ts
 var controlsManager = new ControlsManager;
 console.log(controlsManager);
+MapAdapter.fromURL("./tiled/map.json").then(console.log);
