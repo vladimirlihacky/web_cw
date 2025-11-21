@@ -1,3 +1,4 @@
+import type { BaseEntity } from "../entities/base.entity";
 import { Events } from "../events/events.manager"
 import { Controls } from "./controls.list";
 
@@ -35,12 +36,39 @@ export class UserIOManager {
     }
 }
 
+
 export class ControlsManager {
-    private userIO = new UserIOManager();
+    public userIO = new UserIOManager();
+    private activeControls = new Set<Controls>();
+    private boundEntity: { move: (x: number, y: number) => void } | null = null;
     
     constructor() {
-        this.userIO.events.subscribe((name, { control }) => {
-            console.log(name, control)
-        })
+        this.userIO.events.subscribeTo("control.start", (data: { control: Controls }) => {
+            this.activeControls.add(data.control);
+            this.updateMovement();
+        });
+        
+        this.userIO.events.subscribeTo("control.stop", (data: { control: Controls }) => {
+            this.activeControls.delete(data.control);
+            this.updateMovement();
+        });
+    }
+
+    bindEntity(entity: BaseEntity) {
+        this.boundEntity = entity;
+    }
+
+    private updateMovement() {
+        if (!this.boundEntity) return;
+
+        let x = 0;
+        let y = 0;
+
+        if (this.activeControls.has(Controls.Left)) x -= 1;
+        if (this.activeControls.has(Controls.Right)) x += 1;
+        if (this.activeControls.has(Controls.Up)) y -= 1;
+        if (this.activeControls.has(Controls.Down)) y += 1;
+
+        this.boundEntity.move(x, y);
     }
 }

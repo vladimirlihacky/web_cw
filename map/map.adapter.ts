@@ -1,16 +1,33 @@
 import type { MapLayer, MapObject, MapSchema, ObjectGroup, TileLayer } from "./map.schema";
+import { MapTileset, type SpriteSheet } from "./map.tileset";
 import type { Tiled } from "./tiled.schema";
 
 export class MapAdapter {
-    static async fromURL(url: string): Promise<MapSchema> {
+    static async fromURL(url: string) {
         const response = await fetch(url);
         const tiledSchema: Tiled.Schema = await response.json();
         const schema: MapSchema = {
             ...this.parseMapInfo(tiledSchema),
             ...this.parseLayers(tiledSchema)
         }
+        const spriteSheets = this.parseSpriteSheets(tiledSchema)
+        const tileset = new MapTileset(spriteSheets);
 
-        return schema;
+        await tileset.init()
+
+        return { schema, tileset };
+    }
+
+    static parseSpriteSheets(schema: Tiled.Schema): SpriteSheet[] {
+        return schema.tilesets.map(sheet => ({
+            source: sheet.image,
+            height: sheet.imageheight,
+            width: sheet.imagewidth,
+            tileHeight: sheet.tileheight,
+            tileWidth: sheet.tilewidth,
+            firstgid: sheet.firstgid,
+            tilesCount: sheet.tilecount,
+        }))
     }
 
     static parseMapInfo(schema: Tiled.Schema) {
@@ -40,7 +57,10 @@ export class MapAdapter {
             }
         }
 
-        return { objects, layers }
+        return { 
+            objects, 
+            layers,
+        }
     }
 
     static parseTilesLayer(layer: Tiled.TilesLayer): TileLayer {
@@ -48,6 +68,8 @@ export class MapAdapter {
             type: "tiles",
             tiles: layer.data,
             class: layer.class,
+            width: layer.width,
+            height: layer.height,
         }
     }
 
@@ -55,10 +77,14 @@ export class MapAdapter {
         return {
             type: "objects",
             objects: layer.objects.map(obj => ({
-                x: obj.x, 
-                y: obj.y, 
+                id: obj.id,
+                x: Math.floor(obj.x), 
+                y: Math.floor(obj.y), 
                 name: obj.name,
-                type: obj.type
+                type: obj.type,
+                gid: obj.gid,
+                width: obj.width,
+                height: obj.height,
             }))
         }
     }

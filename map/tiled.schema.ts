@@ -6,6 +6,18 @@ export namespace Tiled {
         tileheight: number;
 
         layers: Layer[];
+        tilesets: Tileset[];
+    }
+
+    export interface Tileset {
+        image: string;
+        firstgid: number; 
+        columns: number; 
+        tilecount: number;
+        tileheight: number;
+        tilewidth: number;
+        imageheight: number;
+        imagewidth: number;
     }
 
     export interface Layer {
@@ -16,6 +28,8 @@ export namespace Tiled {
 
     export interface TilesLayer extends Layer {
         data: number[];
+        width: number,
+        height: number,
     }
 
     export interface ObjectsLayer extends Layer {
@@ -23,9 +37,13 @@ export namespace Tiled {
     }
 
     export interface Object {
+        id: number,
         name: string;
         type: string; 
         x: number;
         y: number;
+        width: number;
+        height: number;
+        gid: number;
     }
 }

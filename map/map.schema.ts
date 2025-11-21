@@ -6,11 +6,13 @@ export interface MapSchema {
 }
 
 export interface MapLayer {
-    type: string;
+    type: "tiles" | "objects";
 }
 
 export interface TileLayer extends MapLayer {
     tiles: number[];
+    width: number;
+    height: number;
     class: string;
 }
 
@@ -19,8 +21,12 @@ export interface ObjectGroup extends MapLayer {
 }
 
 export interface MapObject {
+    id: number,
     x: number;
     y: number;
+    width: number;
+    height: number;
     type: string;
     name: string;
+    gid: number;
 }
